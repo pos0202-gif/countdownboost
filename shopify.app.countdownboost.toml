@@ -1,0 +1,30 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "e74232c8e839d2941a1c6bb77e053fae"
+application_url = "https://dictionaries-oils-ambassador-production.trycloudflare.com"
+embedded = true
+name = "CountdownBoost"
+
+[webhooks]
+api_version = "2026-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/scopes_update"
+  topics = [ "app/scopes_update" ]
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = [ "app/uninstalled" ]
+
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+  uri = "https://dictionaries-oils-ambassador-production.trycloudflare.com/webhooks/customers/data_request"
+
+[access_scopes]
+scopes = "write_products,write_metaobjects,write_metaobject_definitions"
+
+[auth]
+redirect_urls = [ "https://dictionaries-oils-ambassador-production.trycloudflare.com/api/auth" ]
+
+[build]
+automatically_update_urls_on_dev = true

@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id                   String    @id
+  shop                 String
+  state                String
+  isOnline             Boolean   @default(false)
+  scope                String?
+  expires              DateTime?
+  accessToken          String
+  userId               BigInt?
+  firstName            String?
+  lastName             String?
+  email                String?
+  accountOwner         Boolean   @default(false)
+  locale               String?
+  collaborator         Boolean?  @default(false)
+  emailVerified        Boolean?  @default(false)
+  refreshToken         String?
+  refreshTokenExpires  DateTime?
+}
+
+model CountdownSettings {
+  id                Int      @id @default(autoincrement())
+  shop              String   @unique
+
+  enabled           Boolean  @default(false)
+
+  headline          String   @default("Limited Time Offer")
+  message           String   @default("Get 10% off before the timer ends.")
+
+  endTime           String   @default("")
+
+  backgroundColor   String   @default("#111111")
+  textColor         String   @default("#ffffff")
+
+  buttonText        String   @default("Shop now")
+  buttonLink        String   @default("/collections/all")
+
+  countdownType     String   @default("fixed")
+  evergreenMinutes  Int      @default(30)
+
+  bannerPosition    String   @default("inline")
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}

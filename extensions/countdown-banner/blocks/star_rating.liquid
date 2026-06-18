@@ -1,0 +1,342 @@
+{% assign app_settings = shop.metafields.countdownboost.settings.value %}
+
+{% assign enabled = app_settings.enabled | default: block.settings.enabled %}
+{% assign heading = app_settings.headline | default: block.settings.heading %}
+{% assign message = app_settings.message | default: block.settings.message %}
+{% assign end_time = app_settings.endTime | default: block.settings.end_time %}
+{% assign background_color = app_settings.backgroundColor | default: block.settings.background_color %}
+{% assign text_color = app_settings.textColor | default: block.settings.text_color %}
+{% assign button_text = app_settings.buttonText | default: block.settings.button_text %}
+{% assign button_link = app_settings.buttonLink | default: block.settings.button_link %}
+{% assign countdown_type = app_settings.countdownType | default: block.settings.countdown_type %}
+{% assign evergreen_minutes = app_settings.evergreenMinutes | default: block.settings.evergreen_minutes %}
+{% assign banner_position = app_settings.bannerPosition | default: block.settings.banner_position %}
+
+{% if enabled %}
+  <div
+    id="countdownboost-banner-{{ block.id }}"
+    style="
+      background: {{ background_color }};
+      color: {{ text_color }};
+      padding: 18px 20px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 700;
+
+      {% if banner_position == 'sticky' %}
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 999999;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        border-radius: 0;
+      {% else %}
+        position: relative;
+        max-width: 1200px;
+        margin: 0 auto 16px auto;
+        border-radius: 10px;
+      {% endif %}
+
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+    "
+  >
+    <button
+      id="countdownboost-close-{{ block.id }}"
+      type="button"
+      aria-label="Close countdown banner"
+      style="
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        background: rgba(255,255,255,0.16);
+        color: {{ text_color }};
+        border: none;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 18px;
+        line-height: 28px;
+        font-weight: 700;
+      "
+    >
+      ×
+    </button>
+
+    <div style="font-size: 20px; line-height: 1.3; padding: 0 36px;">
+      🔥 {{ heading }}
+    </div>
+
+    <div style="margin-top: 8px; font-size: 16px; line-height: 1.4;">
+      {{ message }}
+    </div>
+
+    <div style="margin-top: 14px;">
+      <a
+        href="{{ button_link }}"
+        style="
+          background: #ffffff;
+          color: #111111;
+          padding: 10px 22px;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 800;
+          display: inline-block;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+        "
+      >
+        {{ button_text }}
+      </a>
+    </div>
+
+    <div style="margin-top: 14px; font-size: 22px; line-height: 1.3;">
+      Ends in:
+      <span id="countdownboost-timer-{{ block.id }}">
+        Loading...
+      </span>
+    </div>
+  </div>
+
+  {% if banner_position == 'sticky' %}
+    <div style="height: 180px;"></div>
+  {% endif %}
+
+  <script>
+  (function() {
+    const bannerElement =
+      document.getElementById(
+        "countdownboost-banner-{{ block.id }}"
+      );
+
+    const timerElement =
+      document.getElementById(
+        "countdownboost-timer-{{ block.id }}"
+      );
+
+    const closeButton =
+      document.getElementById(
+        "countdownboost-close-{{ block.id }}"
+      );
+
+    if (!bannerElement || !timerElement) return;
+
+    const countdownType = "{{ countdown_type }}";
+    const endTimeString = "{{ end_time }}";
+    const evergreenMinutes = Number("{{ evergreen_minutes }}") || 30;
+
+    const baseKey =
+      "countdownboost_{{ shop.permanent_domain }}_{{ block.id }}";
+
+    const evergreenEndKey = baseKey + "_evergreen_end";
+    const dismissedUntilKey = baseKey + "_dismissed_until";
+
+    const nowAtLoad = new Date().getTime();
+    const dismissedUntil =
+      Number(localStorage.getItem(dismissedUntilKey) || 0);
+
+    if (dismissedUntil && dismissedUntil > nowAtLoad) {
+      bannerElement.style.display = "none";
+      return;
+    }
+
+    if (closeButton) {
+      closeButton.addEventListener("click", function() {
+        const hideUntil =
+          new Date().getTime() + 24 * 60 * 60 * 1000;
+
+        localStorage.setItem(dismissedUntilKey, String(hideUntil));
+
+        bannerElement.style.display = "none";
+      });
+    }
+
+    function getEndTime() {
+      if (countdownType === "evergreen") {
+        const savedEndTime =
+          Number(localStorage.getItem(evergreenEndKey) || 0);
+
+        if (savedEndTime && savedEndTime > new Date().getTime()) {
+          return savedEndTime;
+        }
+
+        const newEndTime =
+          new Date().getTime() + evergreenMinutes * 60 * 1000;
+
+        localStorage.setItem(evergreenEndKey, String(newEndTime));
+
+        return newEndTime;
+      }
+
+      return new Date(endTimeString).getTime();
+    }
+
+    const endTime = getEndTime();
+
+    function updateTimer() {
+      const now = new Date().getTime();
+      const distance = endTime - now;
+
+      if (countdownType !== "evergreen") {
+        if (!endTimeString || isNaN(endTime)) {
+          timerElement.textContent = "Set an end time";
+          return;
+        }
+      }
+
+      if (distance <= 0) {
+        timerElement.textContent = "Offer ended";
+
+        setTimeout(function() {
+          bannerElement.style.display = "none";
+        }, 1200);
+
+        return;
+      }
+
+      const days =
+        Math.floor(distance /
+        (1000 * 60 * 60 * 24));
+
+      const hours =
+        Math.floor(
+          (distance %
+          (1000 * 60 * 60 * 24))
+          /
+          (1000 * 60 * 60)
+        );
+
+      const minutes =
+        Math.floor(
+          (distance %
+          (1000 * 60 * 60))
+          /
+          (1000 * 60)
+        );
+
+      const seconds =
+        Math.floor(
+          (distance %
+          (1000 * 60))
+          /
+          1000
+        );
+
+      if (days > 0) {
+        timerElement.textContent =
+          days + "d " +
+          hours + "h " +
+          minutes + "m " +
+          seconds + "s";
+      } else {
+        timerElement.textContent =
+          hours + "h " +
+          minutes + "m " +
+          seconds + "s";
+      }
+    }
+
+    updateTimer();
+
+    setInterval(updateTimer, 1000);
+  })();
+  </script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Countdown Banner",
+  "target": "section",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enabled",
+      "label": "Enable Banner",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Banner Heading",
+      "default": "Limited Time Offer"
+    },
+    {
+      "type": "text",
+      "id": "message",
+      "label": "Banner Message",
+      "default": "Shop now and save today!"
+    },
+    {
+      "type": "select",
+      "id": "countdown_type",
+      "label": "Countdown Type",
+      "default": "fixed",
+      "options": [
+        {
+          "value": "fixed",
+          "label": "Fixed end time"
+        },
+        {
+          "value": "evergreen",
+          "label": "Evergreen countdown"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "end_time",
+      "label": "End Time",
+      "default": "2026-12-31T23:59:59"
+    },
+    {
+      "type": "number",
+      "id": "evergreen_minutes",
+      "label": "Evergreen Minutes",
+      "default": 30
+    },
+    {
+      "type": "select",
+      "id": "banner_position",
+      "label": "Banner Position",
+      "default": "inline",
+      "options": [
+        {
+          "value": "inline",
+          "label": "Inline banner"
+        },
+        {
+          "value": "sticky",
+          "label": "Sticky top banner"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Text",
+      "default": "Shop Now"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button Link",
+      "default": "/collections/all"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background Color",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#ffffff"
+    }
+  ]
+}
+{% endschema %}
