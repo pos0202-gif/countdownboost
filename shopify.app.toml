@@ -1,6 +1,6 @@
 client_id = "53f8ae132fda7c8688b4f7202aa5b6c3"
 name = "countdownboost"
-application_url = "https://dictionaries-oils-ambassador-production.trycloudflare.com"
+application_url = "https://countdownboost-production.up.railway.app"
 embedded = true
 
 [build]
@@ -25,4 +25,9 @@ api_version = "2026-07"
 scopes = "write_products,write_metaobjects,write_metaobject_definitions"
 
 [auth]
-redirect_urls = [ "https://dictionaries-oils-ambassador-production.trycloudflare.com/api/auth" ]
+redirect_urls = [
+  "https://countdownboost-production.up.railway.app/api/auth",
+  "https://countdownboost-production.up.railway.app/auth/callback",
+  "https://countdownboost-production.up.railway.app/auth/shopify/callback",
+  "https://countdownboost-production.up.railway.app/api/auth/callback"
+]

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useFetcher, useLoaderData } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import { boundary } from "@shopify/shopify-app-react-router/server";
-import { authenticate } from "../shopify.server";
+import { authenticate, MONTHLY_PLAN } from "../shopify.server";
 import db from "../db.server";
 
 const defaultSettings = {
@@ -20,7 +20,17 @@ const defaultSettings = {
 };
 
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
+  const { session, billing } = await authenticate.admin(request);
+
+  await billing.require({
+    plans: [MONTHLY_PLAN],
+    onFailure: async () =>
+      billing.request({
+        plan: MONTHLY_PLAN,
+        isTest: true,
+        returnUrl: request.url,
+      }),
+  });
 
   const settings = await db.countdownSettings.findUnique({
     where: { shop: session.shop },
