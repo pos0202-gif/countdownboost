@@ -30,7 +30,7 @@ export const loader = async ({ request }) => {
       billing.request({
         plan: MONTHLY_PLAN,
         isTest: true,
-        returnUrl: `${appUrl}/app`,
+        returnUrl: `${appUrl}/app?shop=${session.shop}`,
       }),
   });
 
