@@ -22,13 +22,15 @@ const defaultSettings = {
 export const loader = async ({ request }) => {
   const { session, billing } = await authenticate.admin(request);
 
+  const appUrl = process.env.SHOPIFY_APP_URL || new URL(request.url).origin;
+
   await billing.require({
     plans: [MONTHLY_PLAN],
     onFailure: async () =>
       billing.request({
         plan: MONTHLY_PLAN,
         isTest: true,
-        returnUrl: request.url,
+        returnUrl: `${appUrl}/app`,
       }),
   });
 
