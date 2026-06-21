@@ -23,14 +23,17 @@ export const loader = async ({ request }) => {
   const { session, billing } = await authenticate.admin(request);
 
   const appUrl = process.env.SHOPIFY_APP_URL || new URL(request.url).origin;
-
+  const url = new URL(request.url);
+  const host = url.searchParams.get("host");
   await billing.require({
     plans: [MONTHLY_PLAN],
     onFailure: async () =>
       billing.request({
         plan: MONTHLY_PLAN,
         isTest: true,
-        returnUrl: `${appUrl}/app?shop=${session.shop}`,
+        returnUrl: host
+        ? `${appUrl}/app?shop=${session.shop}&host=${host}`
+        : `${appUrl}/app?shop=${session.shop}`,
       }),
   });
 
